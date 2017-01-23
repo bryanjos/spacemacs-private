@@ -1,0 +1,90 @@
+;;; packages.el --- bj-javascript layer packages file for Spacemacs.
+;;
+;; Copyright (c) 2012-2016 Sylvain Benner & Contributors
+;;
+;; Author: Bryan Joseph <bryanjos@bryanjos>
+;; URL: https://github.com/bryanjos/spacemacs-private
+;;
+;; This file is not part of GNU Emacs.
+;;
+;;; License: GPLv3
+
+;;; Commentary:
+
+;; See the Spacemacs documentation and FAQs for instructions on how to implement
+;; a new layer:
+;;
+;;   SPC h SPC layers RET
+;;
+;;
+;; Briefly, each package to be installed or configured by this layer should be
+;; added to `bj-javascript-packages'. Then, for each package PACKAGE:
+;;
+;; - If PACKAGE is not referenced by any other Spacemacs layer, define a
+;;   function `bj-javascript/init-PACKAGE' to load and initialize the package.
+
+;; - Otherwise, PACKAGE is already referenced by another Spacemacs layer, so
+;;   define the functions `bj-javascript/pre-init-PACKAGE' and/or
+;;   `bj-javascript/post-init-PACKAGE' to customize the package as it is loaded.
+
+;;; Code:
+
+(defconst bj-javascript-packages
+  '(
+    company-flow
+    (prettier-js :location local)
+    flycheck
+    rjsx-mode
+    ))
+
+(defun bj-javascript/init-prettier-js ()
+  (use-package prettier-js
+    :init
+    (add-hook 'rjsx-mode-hook
+              (lambda () (add-hook 'before-save-hook 'prettier-before-save nil t)))
+  ))
+
+(defun bj-javascript/init-rjsx-mode ()
+  (use-package rjsx-mode
+    :defer t
+    :init
+    (progn
+      (add-to-list 'auto-mode-alist '("\\.js\\'" . rjsx-mode))
+
+      (setq
+       js2-mode-show-strict-warnings nil
+       js2-mode-show-parse-errors nil
+       js-indent-level 2
+       js2-basic-offset 2
+       js2-strict-trailing-comma-warning nil
+       js2-strict-missing-semi-warning nil)
+
+      )))
+
+(defun bj-javascript/post-init-company-flow ()
+  (spacemacs|add-company-backends
+    :backends
+    '((company-flow :with company-dabbrev-code)
+      company-files)))
+
+(defun bj-javascript/post-init-flycheck ()
+  (with-eval-after-load 'flycheck
+    (push 'javascript-jshint flycheck-disabled-checkers)
+    (push 'json-jsonlint flycheck-disabled-checkers)
+    (dolist (checker '(javascript-eslint javascript-standard))))
+  (defun bj-javascript/use-eslint-from-node-modules ()
+    (let* ((root (locate-dominating-file
+                  (or (buffer-file-name) default-directory)
+                  "node_modules"))
+           (global-eslint (executable-find "eslint"))
+           (local-eslint (expand-file-name "node_modules/.bin/eslint"
+                                           root))
+           (eslint (if (file-executable-p local-eslint)
+                       local-eslint
+                     global-eslint)))
+      (setq-local flycheck-javascript-eslint-executable eslint)))
+
+  (add-hook 'rjsx-mode-hook #'bj-javascript/use-eslint-from-node-modules)
+
+  (spacemacs/add-flycheck-hook 'rjsx-mode))
+;;; packages.el ends here
