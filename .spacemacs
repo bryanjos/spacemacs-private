@@ -110,7 +110,8 @@ values."
    ;; Press <SPC> T n to cycle to the next theme in the list (works great
    ;; with 2 themes variants, one dark and one light)
    dotspacemacs-themes '(
-                         brin
+                         ;;brin
+                         firebelly
                          spacemacs-dark
                          spacemacs-light
                          solarized-light
@@ -260,6 +261,7 @@ in `dotspacemacs/user-config'."
 
   (setq tramp-ssh-controlmaster-options
         "-o ControlMaster=auto -o ControlPath='tramp.%%C' -o ControlPersist=no")
+
   (xterm-mouse-mode -1)
 
   )
@@ -280,7 +282,6 @@ layers configuration. You are free to put any user code."
                 web-mode-attr-indent-offset 2)
 
   (global-evil-mc-mode 1)
-  (use-package elixir-mode :mode "\\.exjs\\'")
 
 )
 
