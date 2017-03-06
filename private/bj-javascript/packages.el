@@ -31,18 +31,19 @@
 
 (defconst bj-javascript-packages
   '(
+    add-node-modules-path
     company-flow
-    (prettier-js :location local)
+    eslintd-fix
     flycheck
     rjsx-mode
     ))
 
-(defun bj-javascript/init-prettier-js ()
-  (use-package prettier-js
+(defun bj-javascript/init-eslintd-fix ()
+  (use-package eslintd-fix
+    :defer t
+    :commands eslintd-fix-mode
     :init
-    (add-hook 'rjsx-mode-hook
-              (lambda () (add-hook 'before-save-hook 'prettier-before-save nil t)))
-  ))
+    (add-hook 'rjsx-mode-hook #'eslintd-fix-mode)))
 
 (defun bj-javascript/init-rjsx-mode ()
   (use-package rjsx-mode
@@ -59,32 +60,27 @@
        js2-strict-trailing-comma-warning nil
        js2-strict-missing-semi-warning nil)
 
-      )))
+      (add-hook 'rjsx-mode-hook #'bj-javascript/eslintd-set-flycheck-executable))
+    :config
+    (modify-syntax-entry ?_ "w" js2-mode-syntax-table)))
+
+(defun bj-javascript/init-add-node-modules-path ()
+  (use-package add-node-modules-path
+    :defer t
+    :init
+    (with-eval-after-load 'rjsx-mode
+      (add-hook 'rjsx-mode-hook #'add-node-modules-path))))
 
 (defun bj-javascript/post-init-company-flow ()
   (spacemacs|add-company-backends
-    :backends
-    '((company-flow :with company-dabbrev-code)
-      company-files)))
+   :backends
+   '((company-flow :with company-dabbrev-code)
+     company-files)))
 
 (defun bj-javascript/post-init-flycheck ()
   (with-eval-after-load 'flycheck
     (push 'javascript-jshint flycheck-disabled-checkers)
-    (push 'json-jsonlint flycheck-disabled-checkers)
-    (dolist (checker '(javascript-eslint javascript-standard))))
-  (defun bj-javascript/use-eslint-from-node-modules ()
-    (let* ((root (locate-dominating-file
-                  (or (buffer-file-name) default-directory)
-                  "node_modules"))
-           (global-eslint (executable-find "eslint"))
-           (local-eslint (expand-file-name "node_modules/.bin/eslint"
-                                           root))
-           (eslint (if (file-executable-p local-eslint)
-                       local-eslint
-                     global-eslint)))
-      (setq-local flycheck-javascript-eslint-executable eslint)))
-
-  (add-hook 'rjsx-mode-hook #'bj-javascript/use-eslint-from-node-modules)
+    (push 'json-jsonlint flycheck-disabled-checkers))
 
   (spacemacs/add-flycheck-hook 'rjsx-mode))
 ;;; packages.el ends here
