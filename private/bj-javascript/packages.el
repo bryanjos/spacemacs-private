@@ -34,16 +34,23 @@
     add-node-modules-path
     company-flow
     eslintd-fix
+    (prettier-js :location local)
     flycheck
     rjsx-mode
     ))
 
 (defun bj-javascript/init-eslintd-fix ()
-  (use-package eslintd-fix
-    :defer t
-    :commands eslintd-fix-mode
+    (use-package eslintd-fix
+      :commands eslintd-fix-mode
+      :init
+      (add-hook 'rjsx-mode-hook #'eslintd-fix-mode)))
+
+(defun bj-javascript/init-prettier-js ()
+  (use-package prettier-js
     :init
-    (add-hook 'rjsx-mode-hook #'eslintd-fix-mode)))
+    (add-hook 'rjsx-mode-hook
+              (lambda ()
+                (add-hook 'before-save-hook 'prettier)))))
 
 (defun bj-javascript/init-rjsx-mode ()
   (use-package rjsx-mode
